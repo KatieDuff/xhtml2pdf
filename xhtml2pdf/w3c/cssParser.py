@@ -528,15 +528,22 @@ class CSSParser(object):
 
         # [ [ ruleset | atkeywords ] [S|CDO|CDC]* ]*
         while src: # due to ending with ]*
-            if src.startswith('@'):
+            try:
+                if src.startswith('@'):
                 # @media, @page, @font-face
-                src, atResults = self._parseAtKeyword(src)
-                if atResults is not None:
-                    stylesheetElements.extend(atResults)
-            else:
+                    src, atResults = self._parseAtKeyword(src)
+                    if atResults is not None and atResults is not NotImplemented:
+                        stylesheetElements.extend(atResults)
+                else:
                 # ruleset
-                src, ruleset = self._parseRuleset(src)
-                stylesheetElements.append(ruleset)
+                    src, ruleset = self._parseRuleset(src)
+                    stylesheetElements.append(ruleset)
+            except CSSParseError:
+                next_rule_index = src.find('}')
+                if next_rule_index == -1:
+                    src = ''
+                else:
+                    src = src[next_rule_index+1:].lstrip()
 
             # [S|CDO|CDC]*
             src = self._parseSCDOCDC(src)
